@@ -19,6 +19,8 @@ import javax.swing.JOptionPane;
 /**
  *
  * @author Juan Carlos
+ * @author Andrés Ruiz Peñuela
+ * @author Luis Jesús
  */
 public class AutenticaClient extends javax.swing.JFrame {
 
