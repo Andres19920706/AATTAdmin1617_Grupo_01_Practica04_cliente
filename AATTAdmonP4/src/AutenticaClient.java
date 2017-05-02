@@ -340,10 +340,10 @@ public class AutenticaClient extends javax.swing.JFrame {
                 try {
                     // Completamos el proceso y obtenemos la firma PKCS#11
                     final byte[] signatureBytes = signature.sign();
-            
+                    
                     //Devolvemos el resultado de la firma en Base64.
                     byte[] datosBase64 = Base64.getEncoder().encode(signatureBytes);
-                    /*--
+                    
                     //Nota, para obtener los datos a partir de un array en Bytes de Base64.
                     try {
                         byte[] decodedString = Base64.getDecoder().decode(new String(datosBase64).getBytes("UTF-8"));
@@ -351,14 +351,14 @@ public class AutenticaClient extends javax.swing.JFrame {
                     } catch (UnsupportedEncodingException ex) {
                         Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    --*/
                     
                     
+                    System.out.println("ok, no se a producido error 1 y error 2.");
                     
                 } catch (SignatureException ex) {
                     Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            
+           
             } catch (SignatureException ex) {
                 Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -369,7 +369,7 @@ public class AutenticaClient extends javax.swing.JFrame {
             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
         }
    
-        System.out.println("ok");
+        
     }
 
     public class SignatureError extends Exception {
