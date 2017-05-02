@@ -78,7 +78,7 @@ public class User {
      * @param url detipo String.
      * @return 
      */
-    public String firmarDatos (String url){
+    public String datosAFirmar (String url){
         
        
         //Aquí colocas tu objeto tipo Date
@@ -86,13 +86,12 @@ public class User {
         String timestamp = new SimpleDateFormat("dd.MM.yyyy 'at' HH:mm:ss").format(date);
         
         //Aquí obtienes el formato que deseas
-        System.out.println(timestamp);
+        System.out.println("Timestamp: "+ timestamp);
 
         //Obtenemos los datos para firmar, en este caso, se manda el nombre completo, el dni junto con una marca de tiempo como cabecera de los datos, y un string como datos.
         
         String header = "nombre="+this.name +"&apellidos="+this.apellidos+ "&dni="+this.dni+ "&fecha="+timestamp;
-        String body = "Prueba";
-        String datos = header+"&datos="+body;
+        String datos = header+"&datos=";
         
         return datos;
     }

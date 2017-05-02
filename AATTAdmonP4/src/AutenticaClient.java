@@ -3,14 +3,21 @@ import es.gob.jmulticard.jse.provider.DnieProvider;
 import modelUsuario.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,7 +34,8 @@ import javax.swing.JOptionPane;
  */
 public class AutenticaClient extends javax.swing.JFrame {
 
-    public static User user = new User();
+    public static User user = new User(); //Intancia de User.
+    public static String url ="dirección del servidor."; //Localizador Uniforme de Recurso.
 
     /**
      * Creates new form NewJFrame
@@ -153,7 +161,13 @@ public class AutenticaClient extends javax.swing.JFrame {
     private void jButtonAutenticaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAutenticaActionPerformed
         try {
             iniKeyStore();
-            doAuth("hola");
+            try {
+                doAuth("hola");
+            } catch (NoSuchAlgorithmException ex) {
+                Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (InvalidKeyException ex) {
+                Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+            }
         } catch (SignatureError ex) {
             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (KeyStoreException ex) {
@@ -208,12 +222,8 @@ public class AutenticaClient extends javax.swing.JFrame {
                 System.out.println(aliases.nextElement());
             }
             
-            infoBox("Hola "+user.getName()+", "+user.getApellidos()+", DNI: "+user.getDni(), "Bienvenido 2");
-            
-            
-            
-                    
-            
+            //Resultado Tarea 1 y 2.
+            infoBox("Hola "+user.getName()+", "+user.getApellidos(), "Bienvenido");
 
         } catch (KeyStoreException ex) {
             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -231,12 +241,6 @@ public class AutenticaClient extends javax.swing.JFrame {
                 jApellidos.setText(user.getApellidos());
                 jDNI.setText(user.getDni());
                 
-                //Firmamos los métodos (Resultado de la Tarea 3)
-                String url ="dirección del servidor.";
-                String datosFirmados = user.firmarDatos(url);
-                
-                System.out.println(url+datosFirmados);
-
             }
         });
 
@@ -309,15 +313,63 @@ public class AutenticaClient extends javax.swing.JFrame {
     }
 
     /**
+     * Tarea 4.
      * Devuelve los datos de entrada firmados en Base64
      *
      * @param data Datos a firmar
-     * @return
+     * 
      */
-    private String doAuth(String data) throws SignatureError {
+    private void doAuth(String data) throws SignatureError, NoSuchAlgorithmException, InvalidKeyException {
 
         //TODO realizar aquí la firma y crear el método de conexión aparte
-        return null;
+        
+        //Apartado 5.2. Ejemplo de realización de firma electrónica con DNIe
+        // Obtenemos el motor de firma y se inicializa
+        final Signature signature = Signature.getInstance("SHA1withRSA"); //$NON-NLS-1$
+        try {
+            signature.initSign((PrivateKey) dniKS.getKey(alias, null));
+            
+            //Obtenemos los datos a firmar (Tarea 4)
+            String datos = user.datosAFirmar(url); //Resultado de la Tarea 3.
+            datos=datos+data;
+            System.out.println("HOP: "+datos);
+            try {
+                // Firmamos los datos.
+                signature.update(datos.getBytes()); //$NON-NLS-1$
+            
+                try {
+                    // Completamos el proceso y obtenemos la firma PKCS#11
+                    final byte[] signatureBytes = signature.sign();
+            
+                    //Devolvemos el resultado de la firma en Base64.
+                    byte[] datosBase64 = Base64.getEncoder().encode(signatureBytes);
+                    /*--
+                    //Nota, para obtener los datos a partir de un array en Bytes de Base64.
+                    try {
+                        byte[] decodedString = Base64.getDecoder().decode(new String(datosBase64).getBytes("UTF-8"));
+                        System.out.println("RAP: "+new String(decodedString));
+                    } catch (UnsupportedEncodingException ex) {
+                        Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    --*/
+                    
+                    
+                    
+                } catch (SignatureException ex) {
+                    Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            
+            } catch (SignatureException ex) {
+                Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        } catch (KeyStoreException ex) {
+            Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnrecoverableKeyException ex) {
+            Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+   
+        System.out.println("ok");
     }
 
     public class SignatureError extends Exception {
