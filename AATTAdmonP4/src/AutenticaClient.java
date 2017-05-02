@@ -1,9 +1,14 @@
 
+import es.gob.jmulticard.jse.provider.DnieProvider;
+import modelUsuario.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Security;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Enumeration;
@@ -19,8 +24,6 @@ import javax.swing.JOptionPane;
 /**
  *
  * @author Juan Carlos
- * @author Andrés Ruiz Peñuela
- * @author Luis Jesús
  */
 public class AutenticaClient extends javax.swing.JFrame {
 
@@ -67,6 +70,15 @@ public class AutenticaClient extends javax.swing.JFrame {
 
         jName.setFont(new java.awt.Font("Tahoma", 2, 11)); // NOI18N
         jName.setText("nombre");
+        jName.addAncestorListener(new javax.swing.event.AncestorListener() {
+            public void ancestorMoved(javax.swing.event.AncestorEvent evt) {
+            }
+            public void ancestorAdded(javax.swing.event.AncestorEvent evt) {
+                jNameAncestorAdded(evt);
+            }
+            public void ancestorRemoved(javax.swing.event.AncestorEvent evt) {
+            }
+        });
 
         jButtonGrabar.setText("Graba certificado");
         jButtonGrabar.addActionListener(new java.awt.event.ActionListener() {
@@ -96,24 +108,22 @@ public class AutenticaClient extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jButtonGrabar)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButtonAutentica))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel_apellidos)
-                                    .addComponent(jLabel_dni))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jDNI)
-                                    .addComponent(jApellidos))))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(jLabel_apellidos)
+                            .addComponent(jLabel_dni))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jDNI)
+                            .addComponent(jApellidos)))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabelName)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jName)
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButtonGrabar)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabelName)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jName)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButtonAutentica)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -155,11 +165,16 @@ public class AutenticaClient extends javax.swing.JFrame {
       saveCertificate();
     }//GEN-LAST:event_jButtonGrabarActionPerformed
 
+    private void jNameAncestorAdded(javax.swing.event.AncestorEvent evt) {//GEN-FIRST:event_jNameAncestorAdded
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jNameAncestorAdded
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         String dn = "";
+        
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
@@ -186,24 +201,41 @@ public class AutenticaClient extends javax.swing.JFrame {
         try {
             System.setProperty("es.gob.jmulticard.fastmode", "true");
 
-            iniKeyStore();
+            iniKeyStore(); //Tarea 1 y 2.
 
             final Enumeration<String> aliases = dniKS.aliases();
             while (aliases.hasMoreElements()) {
                 System.out.println(aliases.nextElement());
             }
-
-           
-            infoBox("Hola " + user.getName(), "Bienvenido");
+            
+            infoBox("Hola "+user.getName()+", "+user.getApellidos()+", DNI: "+user.getDni(), "Bienvenido 2");
+            
+            
+            
+                    
+            
 
         } catch (KeyStoreException ex) {
             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
             dniKS = null;
         }
+        
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new AutenticaClient().setVisible(true);
+                
+                // Mostramos los datos del usuario en la interfaz. 
+                //Resultado de la Tarea 2.
+                jName.setText(user.getName());
+                jApellidos.setText(user.getApellidos());
+                jDNI.setText(user.getDni());
+                
+                //Firmamos los métodos (Resultado de la Tarea 3)
+                String url ="dirección del servidor.";
+                String datosFirmados = user.firmarDatos(url);
+                
+                System.out.println(url+datosFirmados);
 
             }
         });
@@ -221,10 +253,40 @@ public class AutenticaClient extends javax.swing.JFrame {
     public static void infoBox(String infoMessage, String titleBar) {
         JOptionPane.showMessageDialog(null, infoMessage, titleBar, JOptionPane.INFORMATION_MESSAGE);
     }
-
+    
+    /**
+     * Método para inicializar el almacén de claves y certificados (KeyStore)
+     * @throws KeyStoreException 
+     */
     private static void iniKeyStore() throws KeyStoreException {
-        if (dniKS == null) {
-           //TODO inicializar el KeyStore 
+        
+        if (dniKS == null) {//TODO inicializar el KeyStore 
+           
+           //Apartado 5.1 Ejemplo de extracción de certificados del titular.
+           // Se instancia el proveedor y se anade
+           dniProvider = new DnieProvider();
+           Security.addProvider(dniProvider);
+           
+           // Se obtiene el almacen (denominado DNI) y se carga
+           dniKS = KeyStore.getInstance("DNI"); //$NON-NLS-1$
+           try {
+                dniKS.load(null, null);
+           } catch (IOException ex) {
+                Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+           } catch (NoSuchAlgorithmException ex) {
+                Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+           } catch (CertificateException ex) {
+                Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+           }
+           
+           //Obtenemos el certificado (con clave pública) de firma digital del DNI.
+           authCert = (X509Certificate) dniKS.getCertificate("CertAutenticacion");
+           
+           //Obtenemos los datos del usuario apartir del certificado.
+                //System.out.println("Formato del certificado: "+authCert.toString());
+           user = new User(authCert);
+           
+           
         }
     }
 
@@ -265,6 +327,7 @@ public class AutenticaClient extends javax.swing.JFrame {
         }
 
     }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private static javax.swing.JLabel jApellidos;
