@@ -10,9 +10,11 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
+import java.security.PublicKey;
 import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -162,15 +164,18 @@ public class AutenticaClient extends javax.swing.JFrame {
         try {
             iniKeyStore();
             try {
-                doAuth("hola");
-            } catch (NoSuchAlgorithmException ex) {
-                Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (InvalidKeyException ex) {
+                //Se pide la cadena a firmar.
+                String data = (String) JOptionPane.showInputDialog(
+                            null,"Datos","Firmar",JOptionPane.PLAIN_MESSAGE,
+                            null,null,null);
+                
+                //Realizamos la firma de los datos.
+                doAuth(data);
+                
+            } catch (NoSuchAlgorithmException | InvalidKeyException ex) {
                 Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } catch (SignatureError ex) {
-            Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (KeyStoreException ex) {
+        } catch (SignatureError | KeyStoreException ex) {
             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButtonAutenticaActionPerformed
@@ -267,19 +272,18 @@ public class AutenticaClient extends javax.swing.JFrame {
         if (dniKS == null) {//TODO inicializar el KeyStore 
            
            //Apartado 5.1 Ejemplo de extracción de certificados del titular.
-           // Se instancia el proveedor y se anade
+          
+           // Se instancia el proveedor , Se activa el modo rápido y se anade
            dniProvider = new DnieProvider();
+           System.setProperty("es.gob.jmulticard.fastmode", "true");                   
            Security.addProvider(dniProvider);
+           
            
            // Se obtiene el almacen (denominado DNI) y se carga
            dniKS = KeyStore.getInstance("DNI"); //$NON-NLS-1$
            try {
                 dniKS.load(null, null);
-           } catch (IOException ex) {
-                Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-           } catch (NoSuchAlgorithmException ex) {
-                Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-           } catch (CertificateException ex) {
+           } catch (IOException | NoSuchAlgorithmException | CertificateException ex) {
                 Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
            }
            
@@ -293,20 +297,28 @@ public class AutenticaClient extends javax.swing.JFrame {
            
         }
     }
-
+    /**
+     * Tarea 5.
+     * Extraer la clave pública del certificado de autenticación
+     * 
+     */
     public void saveCertificate() {
         try {
 
-            // Se obtiene el motor de firma y se inicializa
-            FileOutputStream keyfos = new FileOutputStream("public.key");
-            RSAPublicKey rsa = (RSAPublicKey) authCert.getPublicKey();
-            byte encodedKey[] = rsa.getEncoded();
-
-            String rsakey = rsa.getFormat() + " " + rsa.getAlgorithm() + rsa.toString();
-            System.out.println(rsakey);
-            keyfos.write(encodedKey);
-            keyfos.close();
-            //Certificate authCert = ks.getCertificate("CertFirmaDigital");
+            try ( // Se obtiene el motor de firma y se inicializa   
+                    FileOutputStream keyfos = new FileOutputStream("public.key")) {
+                    System.out.println("---");
+                    System.out.println("saveCertificate()"); 
+                    System.out.println("Formato del certificado: "+authCert.toString());
+                    System.out.println("---");
+                    
+                    RSAPublicKey rsa = (RSAPublicKey) authCert.getPublicKey();
+                    byte encodedKey[] = rsa.getEncoded();
+                    String rsakey = rsa.getFormat() + " " + rsa.getAlgorithm() + rsa.toString();
+                    System.out.println(rsakey);
+                    keyfos.write(encodedKey);
+                //Certificate authCert = ks.getCertificate("CertFirmaDigital");
+            }
         } catch (IOException ex) {
             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -330,9 +342,9 @@ public class AutenticaClient extends javax.swing.JFrame {
             signature.initSign((PrivateKey) dniKS.getKey(alias, null));
             
             //Obtenemos los datos a firmar (Tarea 4)
-            String datos = user.datosAFirmar(url); //Resultado de la Tarea 3.
-            datos=datos+data;
+            String datos = user.datosAFirmar(url,data); //Resultado de la Tarea 3.
             System.out.println("HOP: "+datos);
+            
             try {
                 // Firmamos los datos.
                 signature.update(datos.getBytes()); //$NON-NLS-1$
@@ -357,15 +369,13 @@ public class AutenticaClient extends javax.swing.JFrame {
                     
                 } catch (SignatureException ex) {
                     Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                } 
            
             } catch (SignatureException ex) {
                 Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
-        } catch (KeyStoreException ex) {
-            Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (UnrecoverableKeyException ex) {
+     
+        } catch (KeyStoreException | UnrecoverableKeyException ex) {
             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
         }
    
