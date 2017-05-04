@@ -170,7 +170,8 @@ public class AutenticaClient extends javax.swing.JFrame {
                             null,null,null);
                 
                 //Realizamos la firma de los datos.
-                doAuth(data);
+                //doAuth(data);
+                doAuth("heyy");
                 
             } catch (NoSuchAlgorithmException | InvalidKeyException ex) {
                 Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -337,7 +338,7 @@ public class AutenticaClient extends javax.swing.JFrame {
         
         //Apartado 5.2. Ejemplo de realización de firma electrónica con DNIe
         // Obtenemos el motor de firma y se inicializa
-        final Signature signature = Signature.getInstance("SHA1withRSA"); //$NON-NLS-1$
+        final Signature signature = Signature.getInstance("SHA-256withRSA"); //$NON-NLS-1$
         try {
             signature.initSign((PrivateKey) dniKS.getKey(alias, null));
             
