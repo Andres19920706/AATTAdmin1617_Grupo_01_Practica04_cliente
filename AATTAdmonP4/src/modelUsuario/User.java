@@ -92,9 +92,10 @@ public class User {
         
         //Obtenemos los datos para firmar, en este caso, se manda el nombre completo, el dni junto con una marca de tiempo como cabecera de los datos, y un string como datos.
         
-        String header = "fecha="+timestamp+"&name="+this.name +"&ape1="+ape[0]+"&ape2="+ape[1]+"&dni="+this.dni;
-        String datos = header+"&datos="+body;
+        //String header = "fecha="+timestamp+"&name="+this.name +"&ape1="+ape[0]+"&ape2="+ape[1]+"&dni="+this.dni;
+        //String datos = header+"&datos="+body;
         
+        String datos = timestamp + this.name + " " + ape[0] + " " + ape[1] + " " + this.dni + " " + body;      
         return datos;
     }
 

@@ -38,7 +38,9 @@ public class AutenticaClient extends javax.swing.JFrame {
 
     public static User user = new User(); //Intancia de User.
     public static String url ="dirección del servidor."; //Localizador Uniforme de Recurso.
-
+    
+    public static RSAPublicKey saveCertficiadoRSA = null;
+    
     /**
      * Creates new form NewJFrame
      */
@@ -170,8 +172,8 @@ public class AutenticaClient extends javax.swing.JFrame {
                             null,null,null);
                 
                 //Realizamos la firma de los datos.
-                //doAuth(data);
-                doAuth("heyy");
+                doAuth(data);
+                
                 
             } catch (NoSuchAlgorithmException | InvalidKeyException ex) {
                 Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -219,6 +221,7 @@ public class AutenticaClient extends javax.swing.JFrame {
         //</editor-fold>
 
         try {
+            //Activamos el modo rápido.
             System.setProperty("es.gob.jmulticard.fastmode", "true");
 
             iniKeyStore(); //Tarea 1 y 2.
@@ -313,12 +316,14 @@ public class AutenticaClient extends javax.swing.JFrame {
                     System.out.println("Formato del certificado: "+authCert.toString());
                     System.out.println("---");
                     
-                    RSAPublicKey rsa = (RSAPublicKey) authCert.getPublicKey();
-                    byte encodedKey[] = rsa.getEncoded();
-                    String rsakey = rsa.getFormat() + " " + rsa.getAlgorithm() + rsa.toString();
-                    System.out.println(rsakey);
+                    //RSAPublicKey rsa = (RSAPublicKey) authCert.getPublicKey();
+                    //byte encodedKey[] = rsa.getEncoded();
+                    //String rsakey = rsa.getFormat() + " " + rsa.getAlgorithm() + rsa.toString();
+                    byte encodedKey[] = saveCertficiadoRSA.getEncoded();
+                    String rsakey = saveCertficiadoRSA.getFormat() + " " + saveCertficiadoRSA.getAlgorithm() + saveCertficiadoRSA.toString();                    
+                    System.out.println("oprs "+rsakey);
                     keyfos.write(encodedKey);
-                //Certificate authCert = ks.getCertificate("CertFirmaDigital");
+                    
             }
         } catch (IOException ex) {
             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -340,8 +345,12 @@ public class AutenticaClient extends javax.swing.JFrame {
         // Obtenemos el motor de firma y se inicializa
         final Signature signature = Signature.getInstance("SHA-256withRSA"); //$NON-NLS-1$
         try {
+            //Firma con la privada.
             signature.initSign((PrivateKey) dniKS.getKey(alias, null));
-            
+            //Obtenemos el CertFirmaDigital.
+            saveCertficiadoRSA = (RSAPublicKey) dniKS.getCertificate(alias).getPublicKey();
+            System.out.println(saveCertficiadoRSA);
+            //sout +  tabulador
             //Obtenemos los datos a firmar (Tarea 4)
             String datos = user.datosAFirmar(url,data); //Resultado de la Tarea 3.
             System.out.println("HOP: "+datos);
