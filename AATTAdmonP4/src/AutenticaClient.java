@@ -1,9 +1,11 @@
 
+import aatt.practica04.metodosHTTP.PeticionPost;
 import es.gob.jmulticard.jse.provider.DnieProvider;
 import modelUsuario.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -19,25 +21,34 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 /**
- *
+ * Clase AutenticaCliente
+ * 
+ * Objetivo 1:
+ * Obtención de certificados del DNI, firmar datos y realizar una petición HTTP
+ * de tipo POST.
+ * 
+ * Objetivo 2:
+ * Guardar el certificado de autenticación en un documento con extensión key
+ * 
+ * @author Andrés Ruiz Peñuela
+ * @author Luis Jesús Montes Pérez
  * @author Juan Carlos
+ * 
+ * @version 0.0.1
  */
 public class AutenticaClient extends javax.swing.JFrame {
 
     public static User user = new User(); //Intancia de User.
-    public static String url ="dirección del servidor."; //Localizador Uniforme de Recurso.
+    public static String url ="http://localhost:8080/servidorHttp/"; //Localizador Uniforme de Recurso.
     
     public static RSAPublicKey saveCertficiadoRSA = null;
     
@@ -166,13 +177,15 @@ public class AutenticaClient extends javax.swing.JFrame {
         try {
             iniKeyStore();
             try {
-                //Se pide la cadena a firmar.
+                //Se pide los datos que se desean firmar
                 String data = (String) JOptionPane.showInputDialog(
                             null,"Datos","Firmar",JOptionPane.PLAIN_MESSAGE,
                             null,null,null);
                 
                 //Realizamos la firma de los datos.
                 doAuth(data);
+                
+                //doAuth("datos");
                 
                 
             } catch (NoSuchAlgorithmException | InvalidKeyException ex) {
@@ -244,7 +257,7 @@ public class AutenticaClient extends javax.swing.JFrame {
             public void run() {
                 new AutenticaClient().setVisible(true);
                 
-                // Mostramos los datos del usuario en la interfaz. 
+                //Mostramos los datos del usuario en la interfaz. 
                 //Resultado de la Tarea 2.
                 jName.setText(user.getName());
                 jApellidos.setText(user.getApellidos());
@@ -268,7 +281,9 @@ public class AutenticaClient extends javax.swing.JFrame {
     }
     
     /**
-     * Método para inicializar el almacén de claves y certificados (KeyStore)
+     * Método para inicializar el almacén de claves y certificados (KeyStore),
+     * se recomiena inicializarlo en modo rápido
+     * 
      * @throws KeyStoreException 
      */
     private static void iniKeyStore() throws KeyStoreException {
@@ -295,12 +310,10 @@ public class AutenticaClient extends javax.swing.JFrame {
            authCert = (X509Certificate) dniKS.getCertificate("CertAutenticacion");
            
            //Obtenemos los datos del usuario apartir del certificado.
-                //System.out.println("Formato del certificado: "+authCert.toString());
            user = new User(authCert);
-           
-           
         }
     }
+    
     /**
      * Tarea 5.
      * Extraer la clave pública del certificado de autenticación
@@ -310,19 +323,16 @@ public class AutenticaClient extends javax.swing.JFrame {
         try {
 
             try ( // Se obtiene el motor de firma y se inicializa   
-                    FileOutputStream keyfos = new FileOutputStream("public.key")) {
+                    FileOutputStream keyDoc = new FileOutputStream("public.key")) {
                     System.out.println("---");
                     System.out.println("saveCertificate()"); 
                     System.out.println("Formato del certificado: "+authCert.toString());
                     System.out.println("---");
                     
-                    //RSAPublicKey rsa = (RSAPublicKey) authCert.getPublicKey();
-                    //byte encodedKey[] = rsa.getEncoded();
-                    //String rsakey = rsa.getFormat() + " " + rsa.getAlgorithm() + rsa.toString();
-                    byte encodedKey[] = saveCertficiadoRSA.getEncoded();
+                    byte encodedKey[] = saveCertficiadoRSA.getEncoded(); //Codificamos el certificado.
                     String rsakey = saveCertficiadoRSA.getFormat() + " " + saveCertficiadoRSA.getAlgorithm() + saveCertficiadoRSA.toString();                    
                     System.out.println("oprs "+rsakey);
-                    keyfos.write(encodedKey);
+                    keyDoc.write(encodedKey);
                     
             }
         } catch (IOException ex) {
@@ -331,33 +341,36 @@ public class AutenticaClient extends javax.swing.JFrame {
     }
 
     /**
-     * Tarea 4.
-     * Devuelve los datos de entrada firmados en Base64
+     * Métdo doAuthh 
+     * Devuelve los datos firmados en Base64, y realizamos el envío de datos
+     * al servidor
      *
-     * @param data Datos a firmar
+     * @param data de tipo String, corresponde con los datos a firmar
      * 
-     */
+     * @throws AutenticaClient.SignatureError
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException 
+     */   
     private void doAuth(String data) throws SignatureError, NoSuchAlgorithmException, InvalidKeyException {
-
-        //TODO realizar aquí la firma y crear el método de conexión aparte
         
         //Apartado 5.2. Ejemplo de realización de firma electrónica con DNIe
         // Obtenemos el motor de firma y se inicializa
         final Signature signature = Signature.getInstance("SHA-256withRSA"); //$NON-NLS-1$
         try {
-            //Firma con la privada.
+            //Realizamos la firma privada.
             signature.initSign((PrivateKey) dniKS.getKey(alias, null));
-            //Obtenemos el CertFirmaDigital.
-            saveCertficiadoRSA = (RSAPublicKey) dniKS.getCertificate(alias).getPublicKey();
-            System.out.println(saveCertficiadoRSA);
-            //sout +  tabulador
-            //Obtenemos los datos a firmar (Tarea 4)
-            String datos = user.datosAFirmar(url,data); //Resultado de la Tarea 3.
-            System.out.println("HOP: "+datos);
             
+            //Extraemos la clave pública del certificado de autenticación (parte de la tarea 5)
+            saveCertficiadoRSA = (RSAPublicKey) dniKS.getCertificate(alias).getPublicKey();
+            System.out.println("Certificado de autenticacion: \n"+saveCertficiadoRSA);
+            
+            //Obtenemos los datos a firmar (Tarea 4)
+            String datos[] = user.datosAFirmar(url,data); //Resultado de la Tarea 3.
+            
+            //Bloque para firmar y enviar los datos.
             try {
-                // Firmamos los datos.
-                signature.update(datos.getBytes()); //$NON-NLS-1$
+                // Firmamos los datos obtenidos de la tarea.
+                signature.update(datos[1].getBytes()); //$NON-NLS-1$
             
                 try {
                     // Completamos el proceso y obtenemos la firma PKCS#11
@@ -365,31 +378,32 @@ public class AutenticaClient extends javax.swing.JFrame {
                     
                     //Devolvemos el resultado de la firma en Base64.
                     byte[] datosBase64 = Base64.getEncoder().encode(signatureBytes);
-                    
-                    //Nota, para obtener los datos a partir de un array en Bytes de Base64.
+                    System.out.println(Arrays.toString(datosBase64));
+
                     try {
-                        byte[] decodedString = Base64.getDecoder().decode(new String(datosBase64).getBytes("UTF-8"));
-                        System.out.println("RAP: "+new String(decodedString));
+                        //Construimos los parámetros que se van ha enviar
+                        String dataSend = datos[0]+"&firma="+URLEncoder.encode(new String(datosBase64), "UTF-8")+"&clavePublica="+URLEncoder.encode(new String(saveCertficiadoRSA.getEncoded()), "UTF-8");
+                        System.out.println("Parámetrso ha enviar: \n"+dataSend);
+                        
+                        //Realizamos el envío
+                        PeticionPost peti = new PeticionPost(url,dataSend); //Instancia de la case PeticionPost
+                        try {
+                            String resultado = peti.autentica(); //Método para realizar petiicón POST
+                        } catch (IOException ex) {
+                            Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                     } catch (UnsupportedEncodingException ex) {
                         Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    
-                    
-                    System.out.println("ok, no se a producido error 1 y error 2.");
-                    
+                    }                   
                 } catch (SignatureException ex) {
                     Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-                } 
-           
+                }          
             } catch (SignatureException ex) {
                 Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-            }
-     
+            }     
         } catch (KeyStoreException | UnrecoverableKeyException ex) {
             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
-        }
-   
-        
+        } 
     }
 
     public class SignatureError extends Exception {
@@ -400,7 +414,6 @@ public class AutenticaClient extends javax.swing.JFrame {
 
     }
     
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private static javax.swing.JLabel jApellidos;
     private javax.swing.JButton jButtonAutentica;

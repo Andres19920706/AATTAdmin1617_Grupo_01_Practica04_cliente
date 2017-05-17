@@ -78,24 +78,27 @@ public class User {
      * @param url detipo String.
      * @return 
      */
-    public String datosAFirmar (String url,String body){
+    public String [] datosAFirmar (String url,String data){
         
        
         //Aquí colocas tu objeto tipo Date
         Date date = new Date();
-        String timestamp = new SimpleDateFormat("dd.MM.yyyy,HH:mm:ss").format(date);
+        String timestamp = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(date);
         
-        //Separamos los apellidos.
+        //Separamos los apellidos
         String ape[] = this.apellidos.split(" "); 
+        
         //Aquí obtienes el formato que deseas
         System.out.println("Timestamp: "+ timestamp);
         
-        //Obtenemos los datos para firmar, en este caso, se manda el nombre completo, el dni junto con una marca de tiempo como cabecera de los datos, y un string como datos.
+        //Obtenemos los datos que se van enviar sin la clave plública
+        String datos[]={};
         
-        //String header = "fecha="+timestamp+"&name="+this.name +"&ape1="+ape[0]+"&ape2="+ape[1]+"&dni="+this.dni;
-        //String datos = header+"&datos="+body;
+        //Datos que acompañan a la petición
+        datos[0] = "timestap="+timestamp+ "&nombre="+ this.name + "&apellido1="+ape[0]+"&apellido2="+ape[1]+"&dni=" + this.dni;
+        //Datos que se firman
+        datos[1] = data;
         
-        String datos = timestamp + this.name + " " + ape[0] + " " + ape[1] + " " + this.dni + " " + body;      
         return datos;
     }
 
