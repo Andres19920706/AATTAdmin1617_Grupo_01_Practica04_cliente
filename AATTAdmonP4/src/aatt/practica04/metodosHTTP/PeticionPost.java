@@ -43,9 +43,8 @@ public class PeticionPost {
         this.parametros=datos;
     }
     
-    /**
-     * Metodos de acceso.
-     */
+    /* Metodos de acceso "Getters and Setters" */
+     
     /**
      * Metodo que devuelve la direccion del serivor (url)
      * @return request de tipo String

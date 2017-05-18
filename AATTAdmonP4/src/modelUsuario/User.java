@@ -92,12 +92,10 @@ public class User {
         System.out.println("Timestamp: "+ timestamp);
         
         //Obtenemos los datos que se van enviar sin la clave plública
-        String datos[]={};
-        
-        //Datos que acompañan a la petición
-        datos[0] = "timestap="+timestamp+ "&nombre="+ this.name + "&apellido1="+ape[0]+"&apellido2="+ape[1]+"&dni=" + this.dni;
+        System.out.println("OJO: "+"timestap="+timestamp+"&nombre="+ this.name + "&apellido1="+ape[0]+"&apellido2="+ape[1]+"&dni=" + this.dni);
+        //datos[0] = "nombre"+this.name;
         //Datos que se firman
-        datos[1] = data;
+        String[] datos = {"timestap="+timestamp+"&nombre="+ this.name + "&apellido1="+ape[0]+"&apellido2="+ape[1]+"&dni=" + this.dni,data};
         
         return datos;
     }
