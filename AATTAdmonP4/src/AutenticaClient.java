@@ -390,6 +390,7 @@ public class AutenticaClient extends javax.swing.JFrame {
                         PeticionPost peti = new PeticionPost(url,dataSend); //Instancia de la case PeticionPost
                         try {
                             String resultado = peti.autentica(); //Método para realizar petición POST
+                            System.out.println(resultado);
                         } catch (IOException ex) {
                             Logger.getLogger(AutenticaClient.class.getName()).log(Level.SEVERE, null, ex);
                         }
